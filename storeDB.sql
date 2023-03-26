@@ -5,6 +5,7 @@
  * @LastEditors: hai-27
  * @LastEditTime: 2020-03-27 15:36:01
  */
+drop database storeDB IF EXISTS  `storeDB`;
 create database storeDB;
 use storeDB;
 create table users(

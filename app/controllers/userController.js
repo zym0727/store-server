@@ -41,7 +41,8 @@ module.exports = {
 
       const loginUser = {
         user_id: user[0].user_id,
-        userName: user[0].userName
+        userName: user[0].userName,
+        isAdmin: user[0].isAdmin
       };
       // 保存用户信息到session
       ctx.session.user = loginUser;
@@ -211,7 +212,149 @@ module.exports = {
         msg: '未知错误，注册失败'
       }
     } catch (error) {
-      reject(error);
+      console.log(error)
+    }
+  },
+  /**
+   * 后台添加用户
+   * @param {Object} ctx
+   */
+  AddUser: async ctx => {
+    let { userName, password, isAdmin, userPhoneNumber, address } = ctx.request.body;
+
+    // 校验用户信息是否符合规则
+    if (!checkUserInfo(ctx, userName, password)) {
+      return;
+    }
+
+    // 连接数据库根据用户名查询用户信息
+    // 先判断该用户是否存在
+    let user = await userDao.FindUserName(userName);
+
+    if (user.length !== 0) {
+      ctx.body = {
+        code: '004',
+        msg: '用户名已经存在，不能添加'
+      }
+      return;
+    }
+  
+    try {
+      // 连接数据库插入用户信息
+      let result = await userDao.AddUser([userName, password, isAdmin, userPhoneNumber, address]);
+      // 操作所影响的记录行数为1,则代表添加成功
+      if (result.affectedRows === 1) {
+        ctx.body = {
+          code: '001',
+          msg: '添加成功'
+        }
+        return;
+      }
+      // 否则失败
+      ctx.body = {
+        code: '500',
+        msg: '未知错误，添加失败'
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  },
+  /**
+   * 后台编辑用户
+   * @param {Object} ctx
+   */
+  UpdateUser: async ctx => {
+    let { user_id, userName, password, isAdmin, userPhoneNumber, address } = ctx.request.body;
+
+    // 校验用户信息是否符合规则
+    if (!checkUserInfo(ctx, userName, password)) {
+      return;
+    }
+
+    try {
+      // 连接数据库更新用户信息
+      let result = await userDao.UpdateUser([userName, password, isAdmin, userPhoneNumber, address, user_id]);
+      // 操作所影响的记录行数为1,则代表更新成功
+      if (result.affectedRows === 1) {
+        ctx.body = {
+          code: '001',
+          msg: '更新成功'
+        }
+        return;
+      }
+      // 否则失败
+      ctx.body = {
+        code: '500',
+        msg: '未知错误，更新失败'
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  },
+  /**
+   * 后台删除用户
+   * @param {Object} ctx
+   */
+  DeleteUser: async ctx => {
+    let { user_id } = ctx.request.body;
+
+    try {
+      // 连接数据库更新用户信息
+      let result = await userDao.DeleteUser(user_id);
+      // 操作所影响的记录行数为1,则代表更新成功
+      if (result.affectedRows === 1) {
+        ctx.body = {
+          code: '001',
+          msg: '删除成功'
+        }
+        return;
+      }
+      // 否则失败
+      ctx.body = {
+        code: '500',
+        msg: '未知错误，删除失败'
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  },
+  /**
+   * 后台查询用户列表
+   * @param {Object} ctx
+   */
+  QueryUserList: async ctx => {
+    let { userName, userPhoneNumber, isAdmin, pageNo, pageSize } = ctx.request.query;
+    try {
+      // 连接数据库获取用户信息
+      let result = await userDao.QueryUserList(userName, userPhoneNumber, isAdmin, pageNo, pageSize);
+      let count = await userDao.CountUser(userName, userPhoneNumber, isAdmin);
+
+      ctx.body = {
+        code: '001',
+        result,
+        total: count[0].total,
+        msg: '查询成功'
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  },
+   /**
+   * 获取所有未删除用户
+   * @param {Object} ctx
+   */
+  GetAllUser: async ctx => {
+    try {
+      // 连接数据库获取用户信息
+      let result = await userDao.GetAllUser()
+
+      ctx.body = {
+        code: '001',
+        result,
+        msg: '查询成功'
+      }
+    } catch (error) {
+      console.log(error)
     }
   }
 };

@@ -64,5 +64,9 @@ module.exports = {
   GetDetailsPicture: async (productID) => {
     const sql = "select * from product_picture where product_id = ? ";
     return await db.query(sql, productID);
+  },
+  GetAllProduct: async () => {
+    const sql = 'select * from product where isDel = 0';
+    return await db.query(sql, []);
   }
 }

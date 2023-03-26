@@ -13,5 +13,9 @@ let orderRouter = new Router();
 orderRouter
   .post('/user/order/getOrder', orderController.GetOrder)
   .post('/user/order/addOrder', orderController.AddOrder)
+  .post('/user/order/backAddOrder', orderController.BackAddOrder)
+  .post('/user/order/updateOrder', orderController.UpdateOrder)
+  .post('/user/order/deleteOrder', orderController.DeleteOrder)
+  .get('/user/order/queryOrderList', orderController.QueryOrderList)
 
 module.exports = orderRouter;

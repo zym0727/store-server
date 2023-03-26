@@ -160,5 +160,23 @@ module.exports = {
       code: '001',
       ProductPicture,
     }
+  },
+  /**
+   * 获取所有未被删除的商品
+   * @param {Object} ctx
+   */
+  GetAllProduct: async ctx => {
+    try {
+      // 连接数据库获取商品信息
+      let result = await productDao.GetAllProduct()
+
+      ctx.body = {
+        code: '001',
+        result,
+        msg: '查询成功'
+      }
+    } catch (error) {
+      console.log(error)
+    }
   }
 }
