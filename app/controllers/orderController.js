@@ -8,6 +8,7 @@
 const orderDao = require('../models/dao/orderDao');
 const shoppingCartDao = require('../models/dao/shoppingCartDao');
 const productDao = require('../models/dao/productDao');
+const userDao = require('../models/dao/userDao');
 const checkLogin = require('../middleware/checkLogin');
 
 module.exports = {
@@ -68,7 +69,7 @@ module.exports = {
    * @param {Object} ctx
    */
   AddOrder: async ctx => {
-    let { user_id, products } = ctx.request.body;
+    let { user_id, products, userPhoneNumber, address } = ctx.request.body;
     // 校验用户是否登录
     if (!checkLogin(ctx, user_id)) {
       return;
@@ -83,7 +84,7 @@ module.exports = {
     // 根据数据库表结构生成字段信息
     for (let i = 0; i < products.length; i++) {
       const temp = products[i];
-      let product = [orderID, user_id, temp.productID, temp.num, temp.price, timeTemp];
+      let product = [orderID, user_id, temp.productID, temp.num, temp.price, 0, timeTemp];
       data.push(...product);
     }
 
@@ -100,6 +101,9 @@ module.exports = {
           const res = await shoppingCartDao.DeleteShoppingCart(user_id, temp.productID);
           rows += res.affectedRows;
         }
+        
+        // 更新地址信息
+        await userDao.UpdateUserForAddress([userPhoneNumber, address, user_id]);
         //判断删除购物车是否成功
         if (rows != products.length) {
           ctx.body = {
@@ -128,11 +132,7 @@ module.exports = {
    * @param {Object} ctx
    */
   BackAddOrder: async ctx => {
-    let { user_id, orderUserId, products, order_time } = ctx.request.body;
-    // 校验用户是否登录
-    if (!checkLogin(ctx, user_id)) {
-      return;
-    }
+    let { user_id, orderUserId, products, order_time, order_status } = ctx.request.body;
 
     // 获取当前时间戳
     const timeTemp = new Date().getTime();
@@ -142,7 +142,7 @@ module.exports = {
     // 根据数据库表结构生成字段信息
     for (let i = 0; i < products.length; i++) {
       const temp = products[i];
-      let product = [orderID, orderUserId, temp.productID, temp.num, temp.price, order_time];
+      let product = [orderID, orderUserId, temp.productID, temp.num, temp.price, order_status, order_time];
       data.push(...product);
     }
 
@@ -171,11 +171,7 @@ module.exports = {
    * @param {Object} ctx
    */
   UpdateOrder: async ctx => {
-    let { order_id, user_id, orderUserId, products, order_time } = ctx.request.body;
-    // 校验用户是否登录
-    if (!checkLogin(ctx, user_id)) {
-      return;
-    }
+    let { order_id, user_id, orderUserId, products, order_status, order_time } = ctx.request.body;
 
     try {
       // 连接数据库更新订单信息
@@ -185,7 +181,7 @@ module.exports = {
         // 根据数据库表结构生成字段信息
         for (let i = 0; i < products.length; i++) {
           const temp = products[i];
-          let product = [order_id, orderUserId, temp.productID, temp.num, temp.price, order_time];
+          let product = [order_id, orderUserId, temp.productID, temp.num, temp.price, order_status, order_time];
           data.push(...product);
         }
 
@@ -262,6 +258,7 @@ module.exports = {
             userName: cur.userName,
             productsDetail: [product],
             price: product.num * product.price,
+            order_status: cur.order_status,
             order_time: cur.order_time,
             orderUserId: cur.user_id
           }

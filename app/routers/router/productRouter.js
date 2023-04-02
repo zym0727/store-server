@@ -19,6 +19,10 @@ productRouter
   .post('/product/getProductBySearch', productController.GetProductBySearch)
   .post('/product/getDetails', productController.GetDetails)
   .post('/product/getDetailsPicture', productController.GetDetailsPicture)
-  .get('/product/all', productController.GetAllProduct)
+  .get('/user/product/getNoPagedProducts', productController.GetNoPagedProducts)
+  .get('/user/product/queryProductList', productController.QueryProductList)
+  .post('/user/product/deleteProduct', productController.DeleteProduct)
+  .post('/user/product/backAddProduct', productController.BackAddProduct)
+  .post('/user/product/updateProduct', productController.UpdateProduct)
   
 module.exports = productRouter;

@@ -162,18 +162,171 @@ module.exports = {
     }
   },
   /**
-   * 获取所有未被删除的商品
+   * 获取所有的商品(没有分页)
    * @param {Object} ctx
    */
-  GetAllProduct: async ctx => {
+  GetNoPagedProducts: async ctx => {
     try {
       // 连接数据库获取商品信息
-      let result = await productDao.GetAllProduct()
+      let result = await productDao.GetNoPagedProducts()
 
       ctx.body = {
         code: '001',
         result,
         msg: '查询成功'
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  },
+   /**
+   * 后台查询商品列表
+   * @param {Object} ctx
+   */
+  QueryProductList: async ctx => {
+    let { product_id, product_name, category_id, pageNo, pageSize } = ctx.request.query;
+    try {
+      // 连接数据库分页获取商品
+      let result = await productDao.QueryProductList(product_id, product_name, category_id, pageNo, pageSize);
+      let count = await productDao.CountProduct(product_id, product_name, category_id);
+
+      ctx.body = {
+        code: '001',
+        result,
+        total: count[0].total,
+        msg: '查询成功'
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  },
+  /**
+   * 后台删除商品
+   * @param {Object} ctx
+   */
+  DeleteProduct: async ctx => {
+    let { product_id } = ctx.request.body;
+
+    try {
+      // 连接数据库更新商品
+      let result = await productDao.DeleteProduct(product_id);
+      // 操作所影响的记录行数为1,则代表更新成功
+      if (result.affectedRows === 1) {
+        ctx.body = {
+          code: '001',
+          msg: '删除成功'
+        }
+        return;
+      }
+      // 否则失败
+      ctx.body = {
+        code: '500',
+        msg: '未知错误，删除失败'
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  },
+  /**
+   * 后台添加商品
+   * @param {Object} ctx
+   */
+  BackAddProduct: async ctx => {
+    const { product_name,category_id,product_title,product_intro,product_price,product_selling_price,product_sales } = ctx.request.body;
+    let files = ctx.request.files.files
+    if(!Array.isArray(files)){ // 可以是对象
+      files = [files]
+    }
+    const paths = files.map(file => {
+      const index = file.path.indexOf('upload_')
+      const path = 'public/imgs/upload/' + file.path.substring(index)
+      return path
+    })
+    try {
+      // 把商品插入数据库
+      const result = await productDao.BackAddProduct([product_name,category_id,product_title,product_intro,paths[0],product_price,product_selling_price,product_sales]);
+      // 插入成功
+      if (result.affectedRows == 1) {
+        const product_id = result.insertId
+        const subPaths = paths.slice(1)
+        const picutres = subPaths.map(path => {
+          return {product_id, product_picture: path}
+        })
+        const data = []
+        picutres.forEach(element => {
+          data.push(...[element.product_id, element.product_picture])
+        });
+        const subResult = await productDao.AddProductPicture(picutres.length, data)
+        // 插入图片详情成功
+        if (subResult.affectedRows == picutres.length) {
+          ctx.body = {
+            code: '001',
+            msg: '添加商品成功'
+          }
+          return
+        }
+      }
+      ctx.body = {
+        code: '004',
+        msg: '添加商品失败,未知原因'
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  },
+  /**
+   * 后台更新商品
+   * @param {Object} ctx
+   */
+  UpdateProduct: async ctx => {
+    let { product_name,category_id,product_title,product_intro,product_picture,product_price,product_selling_price,product_sales, deletePictureIds, product_id } = ctx.request.body;
+    let files = ctx.request.files.files
+    if (!Array.isArray(files)){ // 上传0个files是underfined, 上传1个是对象，2个是数组
+      files = files ? [files] : []
+    }
+    const paths = files.map(file => {
+      const index = file.path.indexOf('upload_')
+      const path = 'public/imgs/upload/' + file.path.substring(index)
+      return path
+    })
+    // 主图片没有用上传的第一张
+    const mainPicture = product_picture ? product_picture : paths[0]
+    // 有id表示有要删除的副图
+    const deleteIds = deletePictureIds ? deletePictureIds.split(',') : []
+    // 有要加入的副图路径； 有主图片的paths都是副图路径， 否则取后面的
+    const subPaths = product_picture ? paths : paths.slice(1)
+    try {
+      // 连接数据库更新商品
+      let result = await productDao.UpdateProduct([product_name,category_id,product_title,product_intro,mainPicture,product_price,product_selling_price,product_sales,product_id]);
+      let deleteResult = {affectedRows: deleteIds.length}
+      let addResult = {affectedRows: subPaths.length}
+      if (deleteIds.length > 0) {
+        // 删除关联的商品详情图片
+        deleteResult = await productDao.DeleteProductPicture(deleteIds.length, deleteIds)
+      }
+      // 有paths表示有可能要加入副图
+      if (paths.length > 0) {
+        const picutres = subPaths.map(path => {
+          return {product_id, product_picture: path}
+        })
+        const data = []
+        picutres.forEach(element => {
+          data.push(...[element.product_id, element.product_picture])
+        });
+        // 增加新的商品详情图片
+        addResult = await productDao.AddProductPicture(picutres.length, data)
+      }
+      if ((result.affectedRows == 1) && (deleteResult.affectedRows == deleteIds.length) && (addResult.affectedRows == subPaths.length)) {
+        ctx.body = {
+          code: '001',
+          msg: '更新成功'
+        }
+        return;
+      }
+      // 否则失败
+      ctx.body = {
+        code: '500',
+        msg: '未知错误，更新失败'
       }
     } catch (error) {
       console.log(error)

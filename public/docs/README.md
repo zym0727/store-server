@@ -1,4 +1,4 @@
-# Store（参考小米商城）
+# Store（参考小米商城）(在后端项目的public/docs/README.md中自己改描述)
 
 ## 前言
 

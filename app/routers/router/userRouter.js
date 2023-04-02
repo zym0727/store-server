@@ -15,10 +15,11 @@ userRouter
   .post('/users/miniProgramLogin', userController.miniProgramLogin)
   .post('/users/findUserName', userController.FindUserName)
   .post('/users/register', userController.Register)
-  .post('/users/addUser', userController.AddUser)
-  .post('/users/updateUser', userController.UpdateUser)
-  .post('/users/deleteUser', userController.DeleteUser)
-  .get('/users/queryUserList', userController.QueryUserList)
-  .get('/users/all', userController.GetAllUser)
+  .post('/user/addUser', userController.AddUser)
+  .post('/user/updateUser', userController.UpdateUser)
+  .post('/user/deleteUser', userController.DeleteUser)
+  .get('/user/queryUserList', userController.QueryUserList)
+  .get('/user/getNoPagedUsers', userController.GetNoPagedUsers)
+  .post('/user/getUserById', userController.GetUserById)
 
 module.exports = userRouter;

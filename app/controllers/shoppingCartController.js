@@ -27,7 +27,6 @@ let methods = {
         productImg: product[0].product_picture,
         price: product[0].product_selling_price,
         num: temp.num,
-        maxNum: Math.floor(product[0].product_num / 2),
         check: false
       };
 
@@ -76,15 +75,6 @@ module.exports = {
       const tempNum = tempShoppingCart[0].num + 1;
 
       const product = await productDao.GetProductById(tempShoppingCart[0].product_id);
-      const maxNum = Math.floor(product[0].product_num / 2);
-      //判断数量是否达到限购数量
-      if (tempNum > maxNum) {
-        ctx.body = {
-          code: '003',
-          msg: '数量达到限购数量 ' + maxNum
-        }
-        return;
-      }
 
       try {
         // 更新购物车信息,把数量+1
@@ -199,15 +189,6 @@ module.exports = {
         return;
       }
       const product = await productDao.GetProductById(product_id);
-      const maxNum = Math.floor(product[0].product_num / 2);
-      // 判断数量是否达到限购数量
-      if (num > maxNum) {
-        ctx.body = {
-          code: '004',
-          msg: '数量达到限购数量 ' + maxNum
-        }
-        return;
-      }
 
       try {
         // 修改购物车信息

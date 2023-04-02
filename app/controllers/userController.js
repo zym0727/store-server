@@ -42,7 +42,9 @@ module.exports = {
       const loginUser = {
         user_id: user[0].user_id,
         userName: user[0].userName,
-        isAdmin: user[0].isAdmin
+        isAdmin: user[0].isAdmin,
+        userPhoneNumber: user[0].userPhoneNumber,
+        address: user[0].address
       };
       // 保存用户信息到session
       ctx.session.user = loginUser;
@@ -343,15 +345,36 @@ module.exports = {
    * 获取所有未删除用户
    * @param {Object} ctx
    */
-  GetAllUser: async ctx => {
+   GetNoPagedUsers: async ctx => {
     try {
       // 连接数据库获取用户信息
-      let result = await userDao.GetAllUser()
+      let result = await userDao.GetNoPagedUsers()
 
       ctx.body = {
         code: '001',
         result,
         msg: '查询成功'
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  },
+  /**
+   * 通过id获取用户信息
+   * @param {Object} ctx
+   */
+  GetUserById: async ctx => {
+    let { user_id } = ctx.request.body;
+    try {
+      // 连接数据库获取用户信息
+      let result = await userDao.GetUserById(user_id)
+      let user = {}
+      if(result.length > 0) {
+        user = result[0]
+      }
+      ctx.body = {
+        code: '001',
+        user
       }
     } catch (error) {
       console.log(error)

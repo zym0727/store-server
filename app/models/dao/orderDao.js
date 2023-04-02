@@ -30,25 +30,28 @@ module.exports = {
   },
   // 连接数据库插入订单信息
   AddOrder: async (length, data) => {
-    let sql = 'insert into orders(`id`,`order_id`,`user_id`,`product_id`,`product_num`,`product_price`,`order_time`) values(null,?,?,?,?,?,?)';
+    let sql = 'insert into orders(`id`,`order_id`,`user_id`,`product_id`,`product_num`,`product_price`, `order_status`, `order_time`) values(null,?,?,?,?,?,?,?)';
     for (let i = 0; i < length - 1; i++) {
-      sql += ",(null,?,?,?,?,?,?)"
+      sql += ",(null,?,?,?,?,?,?,?)"
     }
 
     return await db.query(sql, data);
   },
+  // 连接数据库删除订单信息
   DeleteOrder: async (id) => {
     const sql = 'update orders set isDel=1 where order_id =?';
     return await db.query(sql, [id]);
   },
+  // 连接数据库分页查询订单信息
   QueryOrderList: async (order_id, userName, offset, rows) => {
-    let sql = `select * from orders o left join product p on o.product_id = p.product_id left join users u on o.user_id = u.user_id  where o.isDel = 0`;
+    let sql = `select o.order_id,u.userName,p.product_name,o.product_num,p.product_selling_price,o.product_id,o.order_time,o.user_id,o.order_status from orders o left join product p on o.product_id = p.product_id left join users u on o.user_id = u.user_id  where o.isDel = 0`;
     sql = getQuerySql(sql, order_id, userName)
     if (rows !== 0) {
       sql += "  order by o.order_id desc limit " + offset + "," + rows;
     }
     return await db.query(sql, []);
   },
+  // 连接数据库根据条件统计所有订单数量
   CountOrder: async (order_id, userName) => {
     let sql = `select count(1) as total from orders o left join product p on o.product_id = p.product_id left join users u on o.user_id = u.user_id  where o.isDel = 0`;
     sql = getQuerySql(sql, order_id, userName)
