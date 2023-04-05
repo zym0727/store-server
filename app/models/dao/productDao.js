@@ -130,5 +130,10 @@ module.exports = {
       sql += " or id =?"
     }
     return await db.query(sql, data);
+  },
+   // 连接数据库更新某个商品的销量
+   UpdateProductSales: async id => {
+    const sql = `update product set product_sales = (select ifnull(sum(product_num), 0) from orders where product_id = "${ id }" and isDel = 0) where product_id = "${ id }"`
+    return await db.query(sql, [id]);
   }
 }

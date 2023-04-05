@@ -58,4 +58,9 @@ module.exports = {
     sql += ' group by o.order_id order by o.order_id desc'
     return await db.query(sql, []);
   },
+  // 连接数据库通过Orderid获取订单信息
+  GetOrderByOrderId: async order_id => {
+    let sql = 'select * from orders where order_id =? and isDel = 0';
+    return await db.query(sql, order_id);
+  }
 }

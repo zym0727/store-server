@@ -11,6 +11,15 @@ const productDao = require('../models/dao/productDao');
 const userDao = require('../models/dao/userDao');
 const checkLogin = require('../middleware/checkLogin');
 
+// 批量更新商品销售量
+const UpdateProductSales = async (productIds) => {
+  if (productIds && productIds.length) {
+    for (let id of productIds) {
+      await productDao.UpdateProductSales(id)
+    }
+  }
+}
+
 module.exports = {
   /**
    * 获取用户的所有订单信息
@@ -104,6 +113,8 @@ module.exports = {
         
         // 更新地址信息
         await userDao.UpdateUserForAddress([userPhoneNumber, address, user_id]);
+        // 更新商品销售量
+        await UpdateProductSales(products.map(item => item.productID))
         //判断删除购物车是否成功
         if (rows != products.length) {
           ctx.body = {
@@ -150,6 +161,9 @@ module.exports = {
       // 把订单信息插入数据库
       const result = await orderDao.AddOrder(products.length, data);
 
+      // 更新商品销售量
+      await UpdateProductSales(products.map(item => item.productID))
+
       // 插入成功
       if (result.affectedRows == products.length) {
         ctx.body = {
@@ -174,7 +188,9 @@ module.exports = {
     let { order_id, user_id, orderUserId, products, order_status, order_time } = ctx.request.body;
 
     try {
-      // 连接数据库更新订单信息
+      // 原始数据
+      const odersResult = await orderDao.GetOrderByOrderId(order_id)
+      // 连接数据库删除订单信息
       let result = await orderDao.DeleteOrder(order_id);
       if (result.affectedRows > 0) {
         let data = [];
@@ -184,8 +200,13 @@ module.exports = {
           let product = [order_id, orderUserId, temp.productID, temp.num, temp.price, order_status, order_time];
           data.push(...product);
         }
-
+        // 插入新订单
         const result = await orderDao.AddOrder(products.length, data);
+
+        const originIds = odersResult.map(item => item.product_id)
+        const nowIds = products.map(item => item.productID)
+        // 更新商品销售量
+        await UpdateProductSales([...new Set([...originIds, ...nowIds])])
 
         // 插入成功
         if (result.affectedRows == products.length) {
@@ -211,10 +232,13 @@ module.exports = {
    */
   DeleteOrder: async ctx => {
     let { order_id } = ctx.request.body;
-
+    // 原始数据
+    const odersResult = await orderDao.GetOrderByOrderId(order_id)
     try {
       // 连接数据库更新订单信息
       let result = await orderDao.DeleteOrder(order_id);
+       // 更新商品销售量
+      await UpdateProductSales(odersResult.map(item => item.product_id))
       if (result.affectedRows > 0) {
         ctx.body = {
           code: '001',
